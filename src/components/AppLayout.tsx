@@ -1,10 +1,11 @@
 import { ReactNode, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Shield, LayoutDashboard, ScanSearch, History, BookOpen, Settings, LogOut, Menu, X } from "lucide-react";
+import { Shield, LayoutDashboard, ScanSearch, History, BookOpen, Settings, LogOut, Menu, X, Chrome } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -14,14 +15,16 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Scanner", href: "/scanner", icon: ScanSearch },
-    { name: "History", href: "/history", icon: History },
-    { name: "Safety Tips", href: "/safety-tips", icon: BookOpen },
-    { name: "Settings", href: "/settings", icon: Settings },
+    { name: t('nav.dashboard'), href: "/dashboard", icon: LayoutDashboard },
+    { name: t('nav.scanner'), href: "/scanner", icon: ScanSearch },
+    { name: t('nav.history'), href: "/history", icon: History },
+    { name: t('nav.safety'), href: "/safety-tips", icon: BookOpen },
+    { name: "Extension", href: "/extension", icon: Chrome },
+    { name: t('nav.settings'), href: "/settings", icon: Settings },
   ];
 
   const handleLogout = async () => {

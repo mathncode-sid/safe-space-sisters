@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import AppLayout from "@/components/AppLayout";
+import jsPDF from "jspdf";
 
 const History = () => {
   const { toast } = useToast();
@@ -37,10 +38,58 @@ const History = () => {
     }
   };
 
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    const pageHeight = doc.internal.pageSize.height;
+    let yPosition = 20;
+
+    doc.setFontSize(18);
+    doc.text("AI Digital Shield - Scan History", 20, yPosition);
+    yPosition += 15;
+
+    doc.setFontSize(10);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 20, yPosition);
+    yPosition += 15;
+
+    history.forEach((item, index) => {
+      if (yPosition > pageHeight - 40) {
+        doc.addPage();
+        yPosition = 20;
+      }
+
+      doc.setFontSize(12);
+      doc.text(`Scan #${index + 1}`, 20, yPosition);
+      yPosition += 7;
+
+      doc.setFontSize(9);
+      doc.text(`Date: ${new Date(item.created_at).toLocaleString()}`, 20, yPosition);
+      yPosition += 5;
+      doc.text(`Toxicity Score: ${item.toxicity_score}/100`, 20, yPosition);
+      yPosition += 5;
+      doc.text(`Categories: ${item.categories.join(', ')}`, 20, yPosition);
+      yPosition += 7;
+
+      const splitText = doc.splitTextToSize(`Message: ${item.original_text}`, 170);
+      doc.text(splitText, 20, yPosition);
+      yPosition += splitText.length * 5 + 10;
+    });
+
+    doc.save('ai-digital-shield-history.pdf');
+    toast({ title: "PDF exported successfully" });
+  };
+
   return (
     <AppLayout>
       <div className="container max-w-6xl mx-auto py-8 px-4">
-        <h1 className="text-4xl font-bold mb-8">Scan History</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-bold">Scan History</h1>
+          {history.length > 0 && (
+            <Button onClick={exportToPDF} variant="outline">
+              <FileDown className="h-4 w-4 mr-2" />
+              Export PDF
+            </Button>
+          )}
+        </div>
         <div className="space-y-4">
           {history.map((item) => (
             <Card key={item.id} className="p-6">

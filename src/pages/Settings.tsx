@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import AppLayout from "@/components/AppLayout";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Settings = () => {
   const { toast } = useToast();
+  const { language, setLanguage } = useLanguage();
   const [theme, setTheme] = useState("light");
-  const [language, setLanguage] = useState("en");
 
   useEffect(() => {
     loadSettings();
@@ -23,7 +25,6 @@ const Settings = () => {
     const { data } = await supabase.from('user_settings').select('*').eq('user_id', session.user.id).single();
     if (data) {
       setTheme(data.theme);
-      setLanguage(data.language);
       if (data.theme === 'dark') document.documentElement.classList.add('dark');
     }
   };
@@ -52,6 +53,22 @@ const Settings = () => {
               <p className="text-sm text-muted-foreground">Toggle dark theme</p>
             </div>
             <Switch checked={theme === 'dark'} onCheckedChange={toggleTheme} />
+          </div>
+
+          <div className="flex items-center justify-between pt-6 border-t">
+            <div>
+              <Label>Language</Label>
+              <p className="text-sm text-muted-foreground">Choose your preferred language</p>
+            </div>
+            <Select value={language} onValueChange={(value) => setLanguage(value as 'en' | 'sw')}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="en">English</SelectItem>
+                <SelectItem value="sw">Kiswahili</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
           <div className="pt-6 border-t">
