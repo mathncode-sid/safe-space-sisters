@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import AppLayout from "@/components/AppLayout";
+import { Skeleton } from "@/components/ui/skeleton";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [recentScans, setRecentScans] = useState<any[]>([]);
   const [stats, setStats] = useState({ total: 0, thisWeek: 0, avgScore: 0 });
+  const [loadingDemo, setLoadingDemo] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
@@ -37,6 +39,18 @@ const Dashboard = () => {
         avgScore: scans.length ? Math.round(scans.reduce((a, b) => a + b.toxicity_score, 0) / scans.length) : 0
       });
     }
+  };
+
+  const handleExport = async () => {
+    if (recentScans.length === 0) return;
+    const { default: exportScansToPdf } = await import('@/lib/export');
+    const blob = await exportScansToPdf(recentScans);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'scans-report.pdf';
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const chartData = recentScans.slice(0, 7).reverse().map((scan, idx) => ({
@@ -99,13 +113,34 @@ const Dashboard = () => {
 
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-semibold">Recent Scans</h2>
-          <Button variant="outline" onClick={() => navigate("/history")}>
-            View All <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" onClick={() => navigate("/history")}>
+              View All <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+            <Button variant="outline" onClick={handleExport}>Export</Button>
+            <Button variant="secondary" onClick={async () => {
+              setLoadingDemo(true);
+              // load demo data
+              setTimeout(() => {
+                const sample = [
+                  { id: '1', created_at: new Date().toISOString(), original_text: 'You are annoying and nobody likes you', toxicity_score: 78, categories: ['harassment'], highlighted_words: ['annoying'] },
+                  { id: '2', created_at: new Date(Date.now() - 86400000).toISOString(), original_text: 'Stop posting this nonsense', toxicity_score: 55, categories: ['harassment'], highlighted_words: ['nonsense'] }
+                ];
+                setRecentScans(sample as any[]);
+                setStats({ total: 2, thisWeek: 2, avgScore: 66 });
+                setLoadingDemo(false);
+              }, 700);
+            }}>Load demo data</Button>
+          </div>
         </div>
 
         <div className="space-y-4">
-          {recentScans.length === 0 ? (
+          {loadingDemo ? (
+            <div className="grid gap-4">
+              <Skeleton className="h-20" />
+              <Skeleton className="h-20" />
+            </div>
+          ) : recentScans.length === 0 ? (
             <Card className="p-8 text-center">
               <p className="text-muted-foreground mb-4">No scans yet. Start analyzing messages to see them here.</p>
               <Button onClick={() => navigate("/scanner")}>Start Scanning</Button>

@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Shield, Sparkles, AlertTriangle, CheckCircle2, Loader2, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import api from "@/lib/api";
+import { supabase } from "@/integrations/supabase/client";
 import AppLayout from "@/components/AppLayout";
 
 interface AnalysisResult {
@@ -30,6 +32,7 @@ const Scanner = () => {
   const [advice, setAdvice] = useState<string>("");
   const [isGeneratingSafer, setIsGeneratingSafer] = useState(false);
   const [isGeneratingAdvice, setIsGeneratingAdvice] = useState(false);
+  const [showDemoPanel, setShowDemoPanel] = useState(false);
 
   const handleAnalyze = async () => {
     if (!text.trim()) {
@@ -47,22 +50,23 @@ const Scanner = () => {
     setAdvice("");
 
     try {
-      const { data, error } = await supabase.functions.invoke('analyze-toxicity', {
-        body: { text, model }
-      });
+      const data = await api.analyzeToxicity(text, model);
+      // adapt legacy responses
+      const normalized = {
+        toxicityScore: (data.toxicityScore ?? data.toxicity_score ?? data.toxicity) || 0,
+        categories: data.categories ?? data.category ?? [],
+        highlightedWords: data.highlightedWords ?? data.highlighted_words ?? [],
+        severity: data.severity ?? 'low',
+        explanation: data.explanation ?? data.reason ?? '',
+        modelUsed: data.modelUsed ?? data.model_used ?? model,
+      } as AnalysisResult;
 
-      if (error) throw error;
+      setAnalysis(normalized);
 
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      setAnalysis(data);
-      
-      if (data.toxicityScore > 30) {
+      if (normalized.toxicityScore > 30) {
         toast({
           title: "Analysis Complete",
-          description: `Toxicity detected (${data.severity} severity)`,
+          description: `Toxicity detected (${normalized.severity} severity)`,
         });
       } else {
         toast({
@@ -81,17 +85,25 @@ const Scanner = () => {
     }
   };
 
+  // prefill sample message when ?sample=1
+  const location = useLocation();
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(location.search);
+      if (params.get('sample') === '1') {
+        setText("Hey, I saw your profile and you're so annoying - stop posting like that!");
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, [location.search]);
+
   const handleGenerateSaferVersion = async () => {
     setIsGeneratingSafer(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-safer-version', {
-        body: { text, model }
-      });
-
-      if (error) throw error;
-      if (data.error) throw new Error(data.error);
-
-      setSaferVersion(data.saferVersion);
+      const data = await api.generateSaferVersion(text, model);
+  const safer = (data.saferVersion ?? data.safer_version ?? data.safer) || '';
+      setSaferVersion(safer);
       toast({
         title: "Safer version generated",
         description: "Review the alternative message below",
@@ -112,19 +124,9 @@ const Scanner = () => {
     
     setIsGeneratingAdvice(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-advice', {
-        body: { 
-          text, 
-          categories: analysis.categories,
-          severity: analysis.severity,
-          model 
-        }
-      });
-
-      if (error) throw error;
-      if (data.error) throw new Error(data.error);
-
-      setAdvice(data.advice);
+      const data = await api.generateAdvice(text, analysis.categories, analysis.severity, model);
+      const adv = data.advice ?? data.result ?? '';
+      setAdvice(adv);
       toast({
         title: "Safety advice generated",
         description: "Review recommendations below",
@@ -137,6 +139,18 @@ const Scanner = () => {
       });
     } finally {
       setIsGeneratingAdvice(false);
+    }
+  };
+
+  const loadDemoScenario = async (level: 'low' | 'medium' | 'high', autoAnalyze = true) => {
+    let sample = '';
+    if (level === 'low') sample = 'Thanks for your comment! I appreciate your perspective.';
+    if (level === 'medium') sample = "Your post is frustrating and makes me uncomfortable. Please stop.";
+    if (level === 'high') sample = "You are so stupid and should disappear. Nobody wants you here.";
+    setText(sample);
+    if (autoAnalyze) {
+      // small delay so the UI updates
+      setTimeout(() => handleAnalyze(), 150);
     }
   };
 
@@ -212,6 +226,10 @@ const Scanner = () => {
                 onChange={(e) => setText(e.target.value)}
                 className="min-h-[150px] text-base"
               />
+              <div className="mt-2 flex items-center gap-2">
+                <Button variant="ghost" size="sm" onClick={() => setText("Hey, I saw your profile and you're so annoying - stop posting like that!")}>Load example</Button>
+                <Button variant="outline" size="sm" onClick={() => { setText(''); setAnalysis(null); setSaferVersion(''); setAdvice(''); }}>Clear</Button>
+              </div>
             </div>
 
             <div className="flex items-center gap-4">
@@ -227,31 +245,52 @@ const Scanner = () => {
                   </SelectContent>
                 </Select>
               </div>
-              
-              <Button 
-                size="lg" 
-                onClick={handleAnalyze} 
-                disabled={isAnalyzing || !text.trim()}
-                className="mt-6"
-              >
-                {isAnalyzing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Analyzing...
-                  </>
-                ) : (
-                  <>
-                    <Shield className="mr-2 h-4 w-4" />
-                    Analyze Message
-                  </>
+
+              <div className="flex flex-col items-end">
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="sm" onClick={() => setShowDemoPanel(!showDemoPanel)}>Demo Scenarios</Button>
+                  <Button 
+                    size="lg" 
+                    onClick={handleAnalyze} 
+                    disabled={isAnalyzing || !text.trim()}
+                    className="mt-6"
+                  >
+                    {isAnalyzing ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Analyzing...
+                      </>
+                    ) : (
+                      <>
+                        <Shield className="mr-2 h-4 w-4" />
+                        Analyze Message
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                {showDemoPanel && (
+                  <div className="mt-2 p-3 bg-muted rounded-md w-full">
+                    <div className="text-sm font-medium mb-2">Load demo scenario</div>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="ghost" onClick={() => loadDemoScenario('low')}>Low</Button>
+                      <Button size="sm" variant="outline" onClick={() => loadDemoScenario('medium')}>Medium</Button>
+                      <Button size="sm" variant="destructive" onClick={() => loadDemoScenario('high')}>High</Button>
+                    </div>
+                  </div>
                 )}
-              </Button>
+              </div>
             </div>
           </div>
         </Card>
 
         {analysis && (
           <div className="space-y-6">
+            {/* How it works: small explainer for demos */}
+            <Card className="p-4 mb-4">
+              <h3 className="text-sm font-semibold mb-2">How it works</h3>
+              <p className="text-sm text-muted-foreground">Paste a message, click Analyze — our AI detects toxicity, highlights problematic words, suggests safer rewrites, and gives safety advice you can copy or save as evidence.</p>
+            </Card>
             {/* Results Card */}
             <Card className="p-6 shadow-medium">
               <div className="flex items-start justify-between mb-4">
@@ -272,6 +311,29 @@ const Scanner = () => {
                   <p className="text-sm">{analysis.explanation}</p>
                 </div>
               )}
+
+              {/* Show original text with highlighted problematic words */}
+              <div className="mb-4">
+                <h3 className="text-sm font-semibold mb-2">Original Message (highlighted)</h3>
+                <div className="p-4 bg-background rounded-lg prose max-w-none">
+                  {analysis.highlightedWords.length === 0 ? (
+                    <p className="whitespace-pre-wrap">{text}</p>
+                  ) : (
+                    <p className="whitespace-pre-wrap">
+                      {text.split(/(\s+)/).map((w, i) => {
+                        const cleaned = w.replace(/\W/g, '').toLowerCase();
+                        const match = analysis.highlightedWords.find(h => h.toLowerCase() === cleaned);
+                        if (match) {
+                          return (
+                            <span key={i} className="px-1 rounded bg-destructive/20 text-destructive">{w}</span>
+                          );
+                        }
+                        return <span key={i}>{w}</span>;
+                      })}
+                    </p>
+                  )}
+                </div>
+              </div>
 
               {analysis.categories.length > 0 && (
                 <div className="mb-4">
@@ -337,6 +399,13 @@ const Scanner = () => {
               </div>
             </Card>
 
+            {isAnalyzing && !analysis ? (
+              <Card className="p-6">
+                <Skeleton className="h-6 mb-4 w-1/3" />
+                <Skeleton className="h-40" />
+              </Card>
+            ) : null}
+
             {saferVersion && (
               <Card className="p-6 shadow-soft border-green-500/20">
                 <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
@@ -344,7 +413,16 @@ const Scanner = () => {
                   Safer Alternative
                 </h3>
                 <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg">
-                  <p className="text-foreground">{saferVersion}</p>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <p className="text-foreground whitespace-pre-wrap">{saferVersion}</p>
+                    </div>
+                    <div className="flex-shrink-0">
+                      <Button size="sm" variant="ghost" onClick={() => navigator.clipboard.writeText(saferVersion)}>
+                        Copy
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </Card>
             )}
@@ -356,7 +434,16 @@ const Scanner = () => {
                   Safety Advice
                 </h3>
                 <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg prose prose-sm dark:prose-invert max-w-none">
-                  <p className="whitespace-pre-wrap">{advice}</p>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <p className="whitespace-pre-wrap">{advice}</p>
+                    </div>
+                    <div className="flex-shrink-0">
+                      <Button size="sm" variant="ghost" onClick={() => navigator.clipboard.writeText(advice)}>
+                        Copy
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </Card>
             )}

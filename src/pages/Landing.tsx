@@ -13,7 +13,7 @@ const Landing = () => {
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
             <Shield className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold">AI Digital Shield</span>
+            <span className="text-xl font-bold">Safe-Space Sisters</span>
           </div>
           <div className="flex items-center gap-4">
             <Button variant="ghost" onClick={() => navigate("/login")}>
@@ -35,21 +35,29 @@ const Landing = () => {
           </div>
           
           <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-primary to-accent-foreground bg-clip-text text-transparent">
-            Protect Yourself from Digital Harassment
+            Protect Yourself. Reclaim Your Voice.
           </h1>
           
           <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-            AI-powered tool that detects toxic messages, provides safer alternatives, and empowers women and girls to navigate online spaces safely.
+            AI-powered safety tool that detects toxic messages, suggests safer responses, and empowers women and girls to reclaim their voice online.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" onClick={() => navigate("/scanner")} className="text-lg h-12 px-8">
+            <Button size="lg" onClick={() => navigate("/scanner")} className="text-lg h-14 px-10 bg-gradient-to-r from-primary to-accent-foreground text-primary-foreground shadow-lg hover:scale-[1.02] transition-transform">
               Start Scanning Messages
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
             <Button size="lg" variant="outline" onClick={() => navigate("/safety-tips")} className="text-lg h-12 px-8">
               Learn Safety Tips
             </Button>
+            <div className="flex items-center gap-2">
+              <Button size="lg" variant="ghost" onClick={() => navigate('/scanner?sample=1')} className="text-lg h-12 px-8">
+                Quick Demo
+              </Button>
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-secondary/10 text-secondary">
+                Demo-ready
+              </span>
+            </div>
           </div>
         </div>
       </section>
@@ -57,7 +65,7 @@ const Landing = () => {
       {/* Features Grid */}
       <section className="py-20 px-4 bg-secondary/30">
         <div className="container max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">How AI Digital Shield Protects You</h2>
+          <h2 className="text-3xl font-bold text-center mb-12">How Safe-Space Sisters Protects You</h2>
           
           <div className="grid md:grid-cols-3 gap-8">
             <Card className="p-6 shadow-soft hover:shadow-medium transition-smooth">
@@ -142,7 +150,7 @@ const Landing = () => {
       {/* Footer */}
       <footer className="py-8 px-4 border-t">
         <div className="container text-center text-sm text-muted-foreground">
-          <p>© 2025 AI Digital Shield. Building safer digital spaces for all.</p>
+          <p>© 2025 Safe-Space Sisters. Building safer digital spaces for women and girls.</p>
           <p className="mt-2">Part of PowerHacks 2025: Build Safe. Build Bold.</p>
         </div>
       </footer>

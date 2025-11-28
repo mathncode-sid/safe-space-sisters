@@ -17,6 +17,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const { toast } = useToast();
   const { t } = useLanguage();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [demoMode, setDemoMode] = useState(false);
 
   const navigation = [
     { name: t('nav.dashboard'), href: "/dashboard", icon: LayoutDashboard },
@@ -48,6 +49,26 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
+  // load demo mode from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('demoMode');
+      setDemoMode(saved === '1');
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+
+  const toggleDemoMode = () => {
+    try {
+      const next = !demoMode;
+      setDemoMode(next);
+      localStorage.setItem('demoMode', next ? '1' : '0');
+    } catch (e) {
+      // ignore
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -55,7 +76,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/dashboard")}>
             <Shield className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold">AI Digital Shield</span>
+            <span className="text-xl font-bold">Safe-Space Sisters</span>
           </div>
 
           {/* Desktop Navigation */}
@@ -85,6 +106,9 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             >
               <LogOut className="h-4 w-4 mr-2" />
               Logout
+            </Button>
+            <Button variant={demoMode ? 'secondary' : 'ghost'} onClick={toggleDemoMode} className="ml-2">
+              {demoMode ? 'Demo ON' : 'Demo OFF'}
             </Button>
           </nav>
 
