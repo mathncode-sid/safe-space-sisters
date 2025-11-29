@@ -1,73 +1,191 @@
-# Welcome to your Lovable project
+# Safe-Space Sisters
 
-## Project info
+**Reclaim Your Voice. Build Safer Spaces.**
 
-**URL**: https://lovable.dev/projects/e67723d8-b5e1-4f43-8d95-391c5ce14513
+An AI-powered platform that helps women and girls detect toxic messages in real-time, understand what makes them harmful, and get suggestions for safer ways to respond. Built for the **16 Days of Activism Against Gender-Based Violence**.
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## 🎯 Mission
 
-**Use Lovable**
+Digital harassment is a form of gender-based violence. Safe-Space Sisters empowers users by:
+- **Detecting** harmful messages with AI-powered analysis
+- **Understanding** the severity and type of harassment
+- **Responding** safely with AI-suggested alternatives
+- **Documenting** incidents with exportable reports
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/e67723d8-b5e1-4f43-8d95-391c5ce14513) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## ✨ Features
 
-**Use your preferred IDE**
+### 🔍 **Toxicity Detection**
+Analyze any message to identify harassment, hate speech, and threats. Get a toxicity score, category classification, and highlighted harmful phrases.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### ✍️ **Safer Rewrites**
+Receive AI-generated alternative responses that address the concern without escalating the situation.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### 💡 **Personalized Safety Advice**
+Get context-aware recommendations on how to handle the situation, when to escalate, and where to find support.
 
-Follow these steps:
+### 📊 **Dashboard & History**
+Track all analyzed messages with timestamps and severity scores. View trends and statistics about incidents.
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### 📥 **Export Reports**
+Download detailed PDF reports of your scan history for sharing with platform moderators or authorities.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### 🎮 **Demo Mode**
+Try the full functionality without API keys—perfect for testing and demonstrations.
 
-# Step 3: Install the necessary dependencies.
-npm i
+---
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js 18+ (or use [nvm](https://github.com/nvm-sh/nvm#installing-and-updating))
+- bun or npm (project uses bun)
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/Nedcarol/safe-space-sisters.git
+
+# Navigate to project directory
+cd safe-space-sisters
+
+# Install dependencies
+bun install
+# or
+npm install
+
+# Start development server
+bun dev
+# or
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The application will be available at `http://localhost:5173`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Build for Production
 
-**Use GitHub Codespaces**
+```bash
+bun run build
+# or
+npm run build
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+---
 
-## What technologies are used for this project?
+## 📁 Project Structure
 
-This project is built with:
+```
+src/
+├── pages/              # Main page components (Landing, Dashboard, Scanner, etc.)
+├── components/         # Reusable React components
+│   └── ui/            # shadcn/ui component library
+├── contexts/          # React context for global state (Language)
+├── hooks/             # Custom React hooks
+├── integrations/      # External service integrations (Supabase)
+├── lib/               # Utility functions and API helpers
+└── App.tsx            # Root application component
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+supabase/
+├── config.toml        # Supabase project configuration
+├── functions/         # Edge functions for AI analysis
+│   ├── analyze-toxicity/
+│   ├── generate-advice/
+│   └── generate-safer-version/
+└── migrations/        # Database schema migrations
+```
 
-## How can I deploy this project?
+---
 
-Simply open [Lovable](https://lovable.dev/projects/e67723d8-b5e1-4f43-8d95-391c5ce14513) and click on Share -> Publish.
+## 🛠️ Tech Stack
 
-## Can I connect a custom domain to my Lovable project?
+- **Frontend**: React 18 + TypeScript
+- **Build Tool**: Vite
+- **UI Components**: shadcn/ui (Radix UI)
+- **Styling**: Tailwind CSS
+- **Backend**: Supabase (PostgreSQL + Edge Functions)
+- **AI Models**: Google Gemini & OpenAI
+- **Form Handling**: React Hook Form
+- **PDF Export**: jsPDF
+- **HTTP Client**: TanStack React Query
 
-Yes, you can!
+---
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 🔧 Environment Setup
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Create a `.env.local` file in the project root:
+
+```env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+Supabase Edge Functions require configuration in `supabase/config.toml` for API keys:
+```toml
+[env.local.functions.analyze-toxicity]
+[env.local.functions.generate-advice]
+[env.local.functions.generate-safer-version]
+```
+
+---
+
+## 📖 Usage
+
+### Scanning a Message
+1. Navigate to the **Scanner** page
+2. Paste or type a message
+3. Click **"Analyze Message"**
+4. View toxicity score, categories, and highlighted harmful phrases
+5. Generate a safer response or get safety advice
+
+### Dashboard
+- View all your previous scans
+- Filter by date range or severity
+- Export your history as a PDF report
+
+### Demo Mode
+Toggle **"Demo ON"** in the header to use sample data and AI responses without rate limits.
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Please:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/your-feature`)
+3. Commit your changes (`git commit -m 'Add feature'`)
+4. Push to the branch (`git push origin feature/your-feature`)
+5. Open a Pull Request
+
+---
+
+## 📞 Support & Resources
+
+- **Report Issues**: [GitHub Issues](https://github.com/Nedcarol/safe-space-sisters/issues)
+- **Safety Resources**:
+  - [Cyber Civil Rights Initiative](https://www.cybercivilrights.org/)
+  - [Stop Cyberbullying](https://www.stopcyberbullying.org/)
+  - [16 Days of Activism](https://www.un.org/en/events/endviolenceday/)
+
+---
+
+## 📄 License
+
+This project is open source and available under the MIT License.
+
+---
+
+## 🙏 Acknowledgments
+
+Built for the **16 Days of Activism Against Gender-Based Violence** campaign. Safe-Space Sisters is dedicated to empowering women and girls to reclaim their voices online and build safer digital spaces.
+
+---
+
+**For more information, see [PITCH.md](./PITCH.md) for the full demo script and project overview.**
+
+**View the wireframe here: https://app.visily.ai/projects/62ad83db-c2f3-4068-8fb9-d65e36b406f6/boards/2361343**
+
